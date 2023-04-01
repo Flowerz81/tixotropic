@@ -1,0 +1,57 @@
+import tkinter as tk
+
+# creazione della finestra
+root = tk.Tk()
+root.geometry("1920x1080")
+root.configure(bg='gray')
+
+# creazione della query
+query_label = tk.Label(root, text="Selezionare numero Vasca:", font=("Arial", 14))
+query_label.place(relx=0.25, rely=0.95, anchor='center')
+query = tk.Entry(root, width=50)
+query.place(relx=0.5, rely=0.95, anchor='center')
+query.config(font=("Arial", 14))
+
+# creazione delle due tabelle
+table1 = tk.Frame(root)
+table1.pack(side='left', padx=30, pady=30, expand=True)
+table2 = tk.Frame(root)
+table2.pack(side='left', padx=30, pady=30, expand=True)
+
+# creazione della riga di intestazione della tabella 1
+header1 = tk.Label(table1, text="Vasca n. 1", bg='white', font=("Arial", 16))
+header1.grid(row=0, column=0, columnspan=4, sticky='nsew', padx=1, pady=1)
+
+# creazione della riga di intestazione della tabella 2
+header2 = tk.Label(table2, text="Vasca n. 2", bg='white', font=("Arial", 16))
+header2.grid(row=0, column=0, columnspan=4, sticky='nsew', padx=1, pady=1)
+
+# creazione delle celle delle due tabelle
+for i in range(1, 6):
+    for j in range(4):
+        cell1 = tk.Text(table1, width=20, height=3, state='disabled')
+        cell1.grid(row=i, column=j, padx=1, pady=1)
+        cell1.configure(bg='white', font=("Arial", 12))
+        cell2 = tk.Text(table2, width=20, height=3, state='disabled')
+        cell2.grid(row=i, column=j, padx=1, pady=1)
+        cell2.configure(bg='white', font=("Arial", 12))
+
+# centra le tabelle nella finestra
+table1.place(relx=0.25, rely=0.5, anchor='center')
+table2.place(relx=0.75, rely=0.5, anchor='center')
+
+# funzione per gestire l'evento del pulsante "Invia"
+def handle_submit():
+    num_vasca = int(query.get())
+    if num_vasca == 1:
+        table1.config(borderwidth=5, relief='solid', highlightbackground='red')
+        table2.config(borderwidth=1, relief='solid', highlightbackground='black')
+    elif num_vasca == 2:
+        table1.config(borderwidth=1, relief='solid', highlightbackground='black')
+        table2.config(borderwidth=5, relief='solid', highlightbackground='red')
+
+# creazione del pulsante "Invia"
+submit_button = tk.Button(root, text="Invia", command=handle_submit, font=("Arial", 14))
+submit_button.place(relx=0.75, rely=0.95, anchor='center')
+
+root.mainloop()
