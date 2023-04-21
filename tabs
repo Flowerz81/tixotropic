@@ -1,57 +1,317 @@
 import tkinter as tk
+import tkinter.font as tkFont
+import os
+from tkinter import *
+from PIL import ImageTk, Image
+from datetime import datetime
+import csv
+
 
 # creazione della finestra
 root = tk.Tk()
-root.geometry("1920x1080")
-root.configure(bg='gray')
+root.geometry("{0}x{1}+0+0".format(root.winfo_screenwidth(), root.winfo_screenheight()))
 
-# creazione della query
-query_label = tk.Label(root, text="Selezionare numero Vasca:", font=("Arial", 14))
-query_label.place(relx=0.25, rely=0.95, anchor='center')
-query = tk.Entry(root, width=50)
-query.place(relx=0.5, rely=0.95, anchor='center')
-query.config(font=("Arial", 14))
+# carica l'immagine e adattala alle dimensioni della finestra
+image = Image.open("C:/Users/flowe/Desktop/MidJourney/flowerz1.png")
+image = image.resize((2560, 1440), Image.LANCZOS)
+img = ImageTk.PhotoImage(image)
+background_label = Label(root, image=img)
+background_label.place(x=0, y=0, relwidth=1, relheight=1)
 
-# creazione delle due tabelle
-table1 = tk.Frame(root)
-table1.pack(side='left', padx=30, pady=30, expand=True)
-table2 = tk.Frame(root)
-table2.pack(side='left', padx=30, pady=30, expand=True)
+# creazione frame con data e ora corrennte incluso in finestra root
+frameChild = tk.Frame(root)
+font = tkFont.Font(family="Gadugi", size=30,)
+frameChild = tk.Label(root, text="", font=font, justify='center', bg='lavender', bd=0, relief='solid', highlightthickness=5, highlightbackground='red')
+frameChild.place(relx=0.5, rely=0.85, relwidth=0.15, relheight=0.13, anchor='center')
 
-# creazione della riga di intestazione della tabella 1
-header1 = tk.Label(table1, text="Vasca n. 1", bg='white', font=("Arial", 16))
-header1.grid(row=0, column=0, columnspan=4, sticky='nsew', padx=1, pady=1)
+def update_time():
+    current_time = datetime.now().strftime("%d/%m/%Y\n\n%H:%M:%S")
+    frameChild.config(text=current_time)
+    frameChild.after(1000, update_time)
 
-# creazione della riga di intestazione della tabella 2
-header2 = tk.Label(table2, text="Vasca n. 2", bg='white', font=("Arial", 16))
-header2.grid(row=0, column=0, columnspan=4, sticky='nsew', padx=1, pady=1)
+update_time()
 
-# creazione delle celle delle due tabelle
-for i in range(1, 6):
-    for j in range(4):
-        cell1 = tk.Text(table1, width=20, height=3, state='disabled')
-        cell1.grid(row=i, column=j, padx=1, pady=1)
-        cell1.configure(bg='white', font=("Arial", 12))
-        cell2 = tk.Text(table2, width=20, height=3, state='disabled')
-        cell2.grid(row=i, column=j, padx=1, pady=1)
-        cell2.configure(bg='white', font=("Arial", 12))
+# creazione secondo frame con immagini a scorrimento incluso in finestra root
+frameChild2 = tk.Frame(root, bd=10, relief='groove', highlightthickness=5, highlightbackground='orange')
+frameChild2.place(relx=0.5, rely=0.7, relwidth=0.15, relheight=0.13, anchor='center')
+frameChild2Title = tk.Label(root, text="Le creazioni di Fi!", font=("Gadugi", 14, "bold"), justify='center', bg="lavender", width=34, bd=0, relief="solid", highlightthickness=5, highlightbackground='orange')
+frameChild2Title.place(relx=0.5, rely=0.63, anchor='center')
 
-# centra le tabelle nella finestra
-table1.place(relx=0.25, rely=0.5, anchor='center')
-table2.place(relx=0.75, rely=0.5, anchor='center')
+canvas = tk.Canvas(frameChild2, bd=0, bg='white', highlightthickness=0)
+canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+canvas.update()      # aggiorna la finestra del canvas
+canvas_width, canvas_height = canvas.winfo_width(), canvas.winfo_height()
 
-# funzione per gestire l'evento del pulsante "Invia"
-def handle_submit():
-    num_vasca = int(query.get())
-    if num_vasca == 1:
-        table1.config(borderwidth=5, relief='solid', highlightbackground='red')
-        table2.config(borderwidth=1, relief='solid', highlightbackground='black')
-    elif num_vasca == 2:
-        table1.config(borderwidth=1, relief='solid', highlightbackground='black')
-        table2.config(borderwidth=5, relief='solid', highlightbackground='red')
+# Preleva tutti i file con estensione .png nella cartella
+image_dir = './images'
+image_list = [f for f in os.listdir(image_dir) if f.endswith('.png')]
 
-# creazione del pulsante "Invia"
-submit_button = tk.Button(root, text="Invia", command=handle_submit, font=("Arial", 14))
-submit_button.place(relx=0.75, rely=0.95, anchor='center')
+photo_list = []
+for image_name in image_list:
+    image_path = os.path.join(image_dir, image_name)
+    image = Image.open(image_path)
+    resized_image = image.resize((canvas_width, canvas_height))
+    photo = ImageTk.PhotoImage(resized_image)
+    photo_list.append(photo)
+
+# Crea una copia delle immagini originali
+photo_list = photo_list + photo_list
+
+pos_x = 0
+for i, photo in enumerate(photo_list):
+    canvas.create_image(pos_x, 0, image=photo, anchor=tk.NW)
+    pos_x += canvas_width + 5
+
+def animate():
+    global pos_x, photo_list
+    canvas.move("all", -5, 0)
+    pos_x -= 5
+    if pos_x <= -canvas_width:
+        canvas.delete("all")
+        photo_list = photo_list[1:] + [photo_list[0]]
+        pos_x = 0
+        for i, photo in enumerate(photo_list):
+            canvas.create_image(pos_x, 0, image=photo, anchor=tk.NW)
+            pos_x += canvas_width + 5
+    canvas.update()
+    root.after(25, animate)
+        
+animate()
+
+# creazione delle tabelle
+tables = []
+for i in range(14):
+    table_frame = tk.Frame(root)
+    table_frame.grid(row=i // 4, column=i % 4, padx=25, pady=25, sticky='nsew')
+
+    # creazione dell'intestazione della tabella
+    table_header = tk.Label(table_frame, text=f"VASCA  {i+1}", font=("Arial", 18, 'bold'))
+    table_header.pack(side='top', padx=2, pady=2, fill='both')
+
+    inner_table = tk.Frame(table_frame)
+    inner_table.pack(side='top', padx=2, pady=2, expand=True)
+
+    # creazione della riga di intestazione della tabella
+    header_0 = tk.Label(inner_table, text="PRODOTTO", bg='white', font=("Arial", 16))
+    header_0.grid(row=0, column=0, sticky='nsew', padx=1, pady=1)
+    header_1 = tk.Label(inner_table, text="LOTTO", bg='white', font=("Arial", 16))
+    header_1.grid(row=0, column=1, sticky='nsew', padx=1, pady=1)
+    header_2 = tk.Label(inner_table, text="PARTITA", bg='white', font=("Arial", 16))
+    header_2.grid(row=0, column=2, sticky='nsew', padx=1, pady=1)
+    header_3 = tk.Label(inner_table, text="DATA FUSIONE", bg='white', font=("Arial", 16))
+    header_3.grid(row=0, column=3, sticky='nsew', padx=1, pady=1)
+
+    # creazione delle celle della tabella
+    for j in range(1, 2):
+        for k in range(4):
+            cell = tk.Text(inner_table, width=13, height=1, state='disabled')
+            cell.grid(row=j, column=k, padx=1, pady=1)
+            cell.configure(bg='white', fg='red', font=("Gadugi", 13, 'bold'))
+
+    tables.append(inner_table)
+
+# creazione del menù a tendina
+query_label = tk.Label(root, text="Selezionare Vasca", font=("Arial", 18, 'bold'))
+query_var = tk.StringVar(root)
+query_var.set("Selezionare Vasca")
+query_dropdown = tk.OptionMenu(root, query_var, *range(1, 15))
+query_dropdown.place(relx=0.1, rely=0.70, anchor='center')
+query_dropdown.config(font=("Arial", 14), width=20)
+        
+# creazione del secondo menù a tendina
+second_query_label = tk.Label(root, text="Selezionare Prodotto", font=("Arial", 18, 'bold'))
+second_query_var = tk.StringVar(root)
+second_query_var.set("Selezionare Prodotto")
+second_query_dropdown = tk.OptionMenu(root, second_query_var, *["30.11 AB", "30.11 STD", "30.11 CTR", "30.11 ZN", "30.11 SBM.V2"])
+second_query_dropdown.place(relx=0.1, rely=0.80, anchor='center')
+second_query_dropdown.config(font=("Arial", 14), width=20, state='disabled')
+
+# creazione del terzo menù a tendina
+third_query_label = tk.Label(root, text="Selezionare Vasca", font=("Arial", 18, 'bold'))
+third_query_var = tk.StringVar(root)
+third_query_var.set("Selezionare Vasca")
+third_query_dropdown = tk.OptionMenu(root, third_query_var, *range(1, 15))
+third_query_dropdown.place(relx=0.9, rely=0.70, anchor='center')
+third_query_dropdown.config(font=("Arial", 14), width=20)
+
+# creazione del quarto menù a tendina
+fourth_query_label = tk.Label(root, text="Selezionare Partita", font=("Arial", 18, 'bold'))
+fourth_query_var = tk.StringVar(root)
+fourth_query_var.set("Selezionare Partita")
+fourth_query_dropdown = tk.OptionMenu(root, fourth_query_var, *["P0", "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11", "P12", "P13", "P14", "P15"])
+fourth_query_dropdown.place(relx=0.9, rely=0.80, anchor='center')
+fourth_query_dropdown.config(font=("Arial", 14), width=20, state='disabled')
+
+# creazione di una query che permette l'immissione di un numero di lotto
+query_entry = tk.Entry(root, width=20, font=("Arial", 14))
+query_entry.place(relx=0.9, rely=0.87, anchor='center')
+query_entry.insert(0, "Inserire numero lotto")
+query_entry.config(state='disabled')
+
+# creazione di un bottone che stampa la data corrente nella prima cella vuota disponibile della colonna "DATA FUSIONE" e salvataggio dei dati contenuti nella riga selezionata in un file .csv
+def handle_button_click():
+    num_vasca = int(query_var.get().split()[2]) - 1
+    table = tables[num_vasca]
+    for i in range(1, 2):
+        cell = table.grid_slaves(row=i, column=3)[0]
+        if cell.get("1.0", 'end') == '\n':
+            cell.config(state='normal')
+            cell.delete("1.0", 'end')
+            cell.insert("1.0", datetime.now().strftime("%d/%m/%Y"))
+            cell.config(state='disabled')
+            second_query_dropdown.config(state='disabled')
+            button.config(state='disabled')            
+            break
+
+    # salva la tabella selezionata in un file .csv
+    with open('vasca' + str(num_vasca + 1) + '.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        for row in table.grid_slaves():
+            if int(row.grid_info()["row"]) > 0:
+                writer.writerow([row.get("1.0", 'end').strip()])
+    file.close()
+
+button = tk.Button(root, text="Seleziona Data Fusione e Salva", command=handle_button_click)
+button.place(relx=0.1, rely=0.90, anchor='center')
+button.config(font=("Arial", 14), state='disabled')
+
+# creazione di un bottone che stampa il numero di lotto inserito nella prima cella vuota disponibile della colonna "LOTTO" e salvataggio dei dati contenuti nella riga selezionata in un file .csv
+def handle_second_button_click():
+    num_vasca = int(third_query_var.get().split()[2]) - 1
+    table = tables[num_vasca]
+    for i in range(1, 2):
+        cell = table.grid_slaves(row=i, column=1)[0]
+        if cell.get("1.0", 'end') == '\n':
+            cell.config(state='normal')
+            cell.delete("1.0", 'end')
+            cell.insert("1.0", query_entry.get())
+            cell.config(state='disabled')
+            fourth_query_dropdown.config(state='disabled')
+            second_button.config(state='disabled')
+            query_entry.config(state='disabled')            
+            break
+
+    # salva la tabella selezionata in un file .csv su una sola riga
+    with open('vasca' + str(num_vasca + 1) + '.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        for row in table.grid_slaves():
+            if int(row.grid_info()["row"]) > 0:
+                writer.writerow([row.get("1.0", 'end').strip()])
+    file.close()
+
+second_button = tk.Button(root, text="Invia Lotto e Salva", command=handle_second_button_click)
+second_button.place(relx=0.9, rely=0.90, anchor='center')	
+second_button.config(font=("Arial", 14), state='disabled')
+
+# carica tutto l'elenco di valori nel file .csv nelle colonne della tabella
+def load_csv():
+    for i in range(0, 14):
+        table = tables[i]
+        with open('vasca' + str(i + 1) + '.csv', 'r') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                for j in range(0, len(row)):
+                    cell = table.grid_slaves(row=j + 1, column=0)[0]
+                    cell.config(state='normal')
+                    cell.delete("1.0", 'end')
+                    cell.insert("1.0", row[j])
+                    cell.config(state='disabled')
+        file.close()
+
+load_csv()
+
+# funzione per stampare l'azione selezionata nel quarto menù a tendina nella prima riga disponibile della colonna "PARTITA"
+def handle_fourth_dropdown(*args):
+    num_vasca = int(third_query_var.get().split()[2]) - 1
+    table = tables[num_vasca]
+    for i in range(1, 2):
+        cell = table.grid_slaves(row=i, column=2)[0]
+        if cell.get("1.0", 'end') == '\n':
+            fourth_query_dropdown.config(state='normal')
+            cell.config(state='normal')
+            cell.delete("1.0", 'end')
+            cell.insert("1.0", fourth_query_var.get())
+            cell.config(state='disabled')
+            query_entry.config(state='normal')
+            second_button.config(state='normal')
+            break
+            
+fourth_query_var.trace("w", handle_fourth_dropdown)
+
+# funzione per stampare l'azione selezionata nel secondo menù a tendina nella prima riga disponibile della colonna "PRODOTTO"
+def handle_second_dropdown(*args):
+    num_vasca = int(query_var.get().split()[2]) - 1
+    table = tables[num_vasca]
+    for i in range(1, 6):
+        cell = table.grid_slaves(row=i, column=0)[0]
+        if cell.get("1.0", 'end') == '\n':
+            second_query_dropdown.config(state='normal')
+            cell.config(state='normal')
+            cell.delete("1.0", 'end')
+            cell.insert("1.0", second_query_var.get())
+            cell.config(state='disabled')
+            button.config(state='normal')           
+            break
+
+second_query_var.trace("w", handle_second_dropdown)
+
+# funzione per gestire il cambio della vasca selezionata nel menù a tendina
+def handle_vasca_change(*args):
+            num_vasca = int(query_var.get())
+            query_var.set("Vasca n. {}".format(num_vasca))            
+            for i, table in enumerate(tables):
+                if i == num_vasca - 1:
+                    blink_table(table)
+                    second_query_dropdown.config(state='normal')            
+                else:
+                    table.config(borderwidth=1, relief='solid', highlightbackground='black')            
+                      
+query_var.trace("w", handle_vasca_change)
+
+# funzione per gestire il cambio della vasca selezionata nel terzo menù a tendina
+def handle_third_dropdown(*args):
+    num_vasca = int(third_query_var.get())
+    third_query_var.set("Vasca n. {}".format(num_vasca))
+    for i, table in enumerate(tables):
+        if i == num_vasca - 1:
+            blink_table(table)
+            fourth_query_dropdown.config(state='normal')            
+        else:
+            table.config(borderwidth=1, relief='solid', highlightbackground='black')            
+           
+third_query_var.trace("w", handle_third_dropdown)
+
+# crea un bottone che pulisce la vasca selezionata nel terzo menù a tendina
+def clear_third_vasca():
+    num_vasca = int(third_query_var.get().split()[2]) - 1
+    table = tables[num_vasca]
+    for i in range(1, 2):
+        cell = table.grid_slaves(row=i, column=2)[0]
+        cell.config(state='normal')
+        cell.delete("1.0", 'end')
+        cell.config(state='disabled')
+    for i in range(1, 2):
+        cell = table.grid_slaves(row=i, column=1)[0]
+        cell.config(state='normal')
+        cell.delete("1.0", 'end')
+        cell.config(state='disabled')
+    for i in range(1, 2):
+        cell = table.grid_slaves(row=i, column=0)[0]
+        cell.config(state='normal')
+        cell.delete("1.0", 'end')
+        cell.config(state='disabled')
+    for i in range(1, 2):
+        cell = table.grid_slaves(row=i, column=3)[0]
+        cell.config(state='normal')
+        cell.delete("1.0", 'end')
+        cell.config(state='disabled')
+
+third_button = Button(root, text="Pulisci vasca", command=clear_third_vasca)
+third_button.place(relx=0.5, rely=0.5, anchor='center')
+
+# funzione che non fa lampeggiare di rosso i bordi della tabella
+def blink_table(table, count=0):
+    if count < 6:
+       table.config(borderwidth=5, relief='solid', highlightbackground='red')
 
 root.mainloop()
